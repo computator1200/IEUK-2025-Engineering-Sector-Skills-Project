@@ -170,110 +170,125 @@ class LogAnalyzer:
         return high_volume_ips
     
     def generate_report(self):
-        """Generate comprehensive analysis report"""
-        print("\n" + "="*80)
-        print("LOG ANALYSIS REPORT")
-        print("="*80)
+        """Generate comprehensive analysis report and save to file"""
+        report_content = []
+        
+        # Helper function to add line to report
+        def add_line(text=""):
+            report_content.append(text)
+            print(text)
+        
+        add_line("="*80)
+        add_line("LOG ANALYSIS REPORT")
+        add_line("="*80)
         
         # Basic statistics
-        print(f"\n📊 BASIC STATISTICS")
-        print(f"Total Requests: {self.total_requests:,}")
-        print(f"Unique IP Addresses: {len(self.ip_addresses):,}")
-        print(f"Unique Countries: {len(self.countries):,}")
+        add_line(f"\n📊 BASIC STATISTICS")
+        add_line(f"Total Requests: {self.total_requests:,}")
+        add_line(f"Unique IP Addresses: {len(self.ip_addresses):,}")
+        add_line(f"Unique Countries: {len(self.countries):,}")
         if self.daily_traffic:
-            print(f"Date Range: {min(self.daily_traffic.keys())} to {max(self.daily_traffic.keys())}")
+            add_line(f"Date Range: {min(self.daily_traffic.keys())} to {max(self.daily_traffic.keys())}")
         else:
-            print("Date Range: No valid dates found")
+            add_line("Date Range: No valid dates found")
         
         # Top IPs
-        print(f"\n🌐 TOP 10 IP ADDRESSES")
+        add_line(f"\n🌐 TOP 10 IP ADDRESSES")
         for ip, count in self.ip_addresses.most_common(10):
             percentage = (count / self.total_requests) * 100
-            print(f"{ip:<15} {count:>8,} requests ({percentage:>5.1f}%)")
+            add_line(f"{ip:<15} {count:>8,} requests ({percentage:>5.1f}%)")
         
         # Status codes
-        print(f"\n📈 HTTP STATUS CODES")
+        add_line(f"\n📈 HTTP STATUS CODES")
         for status, count in sorted(self.status_codes.items()):
             percentage = (count / self.total_requests) * 100
             status_desc = {
                 200: "OK", 301: "Moved Permanently", 302: "Found", 
                 404: "Not Found", 403: "Forbidden", 500: "Internal Server Error"
             }.get(status, "Other")
-            print(f"{status} {status_desc:<20} {count:>8,} ({percentage:>5.1f}%)")
+            add_line(f"{status} {status_desc:<20} {count:>8,} ({percentage:>5.1f}%)")
         
         # Request methods
-        print(f"\n🔧 REQUEST METHODS")
+        add_line(f"\n🔧 REQUEST METHODS")
         for method, count in self.request_methods.most_common():
             percentage = (count / self.total_requests) * 100
-            print(f"{method:<8} {count:>8,} ({percentage:>5.1f}%)")
+            add_line(f"{method:<8} {count:>8,} ({percentage:>5.1f}%)")
         
         # Countries
-        print(f"\n🌍 TOP 10 COUNTRIES")
+        add_line(f"\n🌍 TOP 10 COUNTRIES")
         for country, count in self.countries.most_common(10):
             percentage = (count / self.total_requests) * 100
-            print(f"{country:<3} {count:>8,} requests ({percentage:>5.1f}%)")
+            add_line(f"{country:<3} {count:>8,} requests ({percentage:>5.1f}%)")
         
         # High volume IPs (potential DDoS or bot activity)
         high_volume = self.identify_high_volume_ips(1000)
         if high_volume:
-            print(f"\n⚠️  HIGH VOLUME IP ADDRESSES (>1000 requests)")
+            add_line(f"\n⚠️  HIGH VOLUME IP ADDRESSES (>1000 requests)")
             for ip, count in sorted(high_volume.items(), key=lambda x: x[1], reverse=True):
                 percentage = (count / self.total_requests) * 100
-                print(f"{ip:<15} {count:>8,} requests ({percentage:>5.1f}%) - POTENTIAL THREAT")
+                add_line(f"{ip:<15} {count:>8,} requests ({percentage:>5.1f}%) - POTENTIAL THREAT")
         
         # Error analysis
         error_count = sum(1 for status in self.status_codes if status >= 400)
         if error_count > 0:
-            print(f"\n❌ ERROR ANALYSIS")
-            print(f"Total Error Requests: {error_count:,}")
+            add_line(f"\n❌ ERROR ANALYSIS")
+            add_line(f"Total Error Requests: {error_count:,}")
             error_rate = (error_count / self.total_requests) * 100
-            print(f"Error Rate: {error_rate:.2f}%")
+            add_line(f"Error Rate: {error_rate:.2f}%")
             
             if self.error_requests:
-                print("Top Error-generating IPs:")
+                add_line("Top Error-generating IPs:")
                 error_ips = Counter(req['ip'] for req in self.error_requests[-1000:])  # Last 1000 errors
                 for ip, count in error_ips.most_common(5):
-                    print(f"  {ip:<15} {count:>3} errors")
+                    add_line(f"  {ip:<15} {count:>3} errors")
         
         # Suspicious activity
         if self.suspicious_ips:
-            print(f"\n🚨 SECURITY ALERTS")
-            print(f"Suspicious IP Addresses Detected: {len(self.suspicious_ips)}")
+            add_line(f"\n🚨 SECURITY ALERTS")
+            add_line(f"Suspicious IP Addresses Detected: {len(self.suspicious_ips)}")
             for ip in list(self.suspicious_ips)[:10]:  # Show first 10
                 request_count = self.ip_addresses[ip]
-                print(f"  {ip:<15} {request_count:>5} requests - REQUIRES INVESTIGATION")
+                add_line(f"  {ip:<15} {request_count:>5} requests - REQUIRES INVESTIGATION")
         
         # Traffic patterns
-        print(f"\n📅 DAILY TRAFFIC PATTERNS")
+        add_line(f"\n📅 DAILY TRAFFIC PATTERNS")
         sorted_days = sorted(self.daily_traffic.items())
         for day, count in sorted_days[-7:]:  # Last 7 days
-            print(f"{day} {count:>8,} requests")
+            add_line(f"{day} {count:>8,} requests")
         
         if len(sorted_days) > 1:
             avg_daily = sum(self.daily_traffic.values()) / len(self.daily_traffic)
-            print(f"Average Daily Requests: {avg_daily:,.0f}")
+            add_line(f"Average Daily Requests: {avg_daily:,.0f}")
         
         # Recommendations
-        print(f"\n💡 RECOMMENDATIONS")
+        add_line(f"\n💡 RECOMMENDATIONS")
         
         if high_volume:
-            print("• Implement rate limiting for high-volume IP addresses")
-            print("• Consider blocking or monitoring IPs with >10,000 requests/day")
+            add_line("• Implement rate limiting for high-volume IP addresses")
+            add_line("• Consider blocking or monitoring IPs with >10,000 requests/day")
         
         if self.suspicious_ips:
-            print("• Investigate suspicious IP addresses for potential security threats")
-            print("• Review firewall rules and access controls")
+            add_line("• Investigate suspicious IP addresses for potential security threats")
+            add_line("• Review firewall rules and access controls")
         
         error_rate = (sum(1 for status in self.status_codes if status >= 400) / self.total_requests) * 100
         if error_rate > 5:
-            print(f"• High error rate ({error_rate:.1f}%) - investigate server issues")
+            add_line(f"• High error rate ({error_rate:.1f}%) - investigate server issues")
         
-        print("• Regular log monitoring should be implemented")
-        print("• Consider implementing intrusion detection systems")
+        add_line("• Regular log monitoring should be implemented")
+        add_line("• Consider implementing intrusion detection systems")
         
-        print("\n" + "="*80)
-        print("END OF REPORT")
-        print("="*80)
+        add_line("\n" + "="*80)
+        add_line("END OF REPORT")
+        add_line("="*80)
+        
+        # Save report to file
+        try:
+            with open('report.txt', 'w', encoding='utf-8') as f:
+                f.write('\n'.join(report_content))
+            print(f"\nReport saved to 'report.txt'")
+        except Exception as e:
+            print(f"Error saving report to file: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description='Analyze web server log files')
