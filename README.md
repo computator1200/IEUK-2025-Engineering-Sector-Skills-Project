@@ -38,7 +38,7 @@ Several IP addresses demonstrate clear bot behavior patterns:
 ### Geographic Distribution
 While traffic appears globally distributed across 14 countries, the concentration of high-volume requests from specific IP ranges indicates coordinated bot networks rather than organic international growth.
 
-## Recommendations
+## Solutions
 
 ### 1. Immediate Rate Limiting
 - Implement basic rate limiting (free with most web servers)
